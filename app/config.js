@@ -52,6 +52,7 @@ db.knex.schema.hasTable('userTable').then(function(exists) {
       userTable.increments('id').primary();
       userTable.string('userName');
       userTable.string('password');
+      userTable.string('hash');
       userTable.integer('link_id');
       userTable.timestamps();
     }).then(function (table) {

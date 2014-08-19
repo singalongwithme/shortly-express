@@ -2,8 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
-// var knex = require('knex');
-
+var bcrypt = require('bcrypt-nodejs');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -69,12 +68,23 @@ app.post('/login',
   var username = req.body.username;
   var password = req.body.password;
 
-  new User({userName: username, password: password}).fetch()
+  new User({userName: username}).fetch()
   .then(function(exists){
+    // console.log("exists username: ", exists.attributes.userName);
+    // console.log("exists password: ", exists.attributes.password);
+    // console.log("password: ", password);
     if(exists){
-      res.render('index');
+      bcrypt.compare(password, exists.attributes.password, function(err, check){
+        if(check === true){
+          res.render('index');
+        } else {
+          console.log("Password is invalid");
+          res.render('login');
+        }
+      });
     } else if (!exists) {
       console.log('Username and/or password is invalid');
+      res.render('login');
     }
   });
 });
