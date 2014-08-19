@@ -1,5 +1,6 @@
 var expect = require('chai').expect;
 var request = require('request');
+var knex = require('knex');
 
 var db = require('../app/config');
 var Users = require('../app/collections/users');
@@ -19,7 +20,7 @@ var xbeforeEach = function(){};
 
 describe('', function() {
 
-  beforeEach(function() {
+  xbeforeEach(function() {
     // log out currently signed in user
     request('http://127.0.0.1:4568/logout', function(error, res, body) {});
 
@@ -113,6 +114,7 @@ describe('', function() {
 
       it('Responds with the short code', function(done) {
         requestWithSession(options, function(error, res, body) {
+
           expect(res.body.url).to.equal('http://www.roflzoo.com/');
           expect(res.body.code).to.not.be.null;
           done();
@@ -153,14 +155,17 @@ describe('', function() {
 
       var link;
 
-      beforeEach(function(done){
+      xbeforeEach(function(done){
         // save a link to the database
         link = new Link({
           url: 'http://www.roflzoo.com/',
           title: 'Rofl Zoo - Daily funny animal pictures',
           base_url: 'http://127.0.0.1:4568'
         });
+          console.log("link before save: ",link);
+
         link.save().then(function(){
+          console.log(link);
           done();
         });
       });
