@@ -3,6 +3,8 @@ var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
 var bcrypt = require('bcrypt-nodejs');
+var session = require('express-session');
+var cookieParser = require('cookie-parser');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -12,6 +14,8 @@ var Link = require('./app/models/link');
 var Click = require('./app/models/click');
 
 var app = express();
+app.use(cookieParser('shhhhh, very secret'));
+app.use(session());
 
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
@@ -22,10 +26,20 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+function restrict(req, res, next) {
+  if (req.session.user) {
+    next();
+  } else {
+    req.session.error = 'Access denied!';
+    res.redirect('/login');
+  }
+};
 
 app.get('/',
 function(req, res) {
-  res.render('login');
+  restrict(req, res, function(){
+    res.render('index');
+  });
 });
 
 // if clicked create account, render signup html
@@ -62,6 +76,7 @@ function(req, res) {
   });
 });
 
+
 //For login
 app.post('/login',
   function(req, res){
@@ -70,15 +85,15 @@ app.post('/login',
 
   new User({userName: username}).fetch()
   .then(function(exists){
-    // console.log("exists username: ", exists.attributes.userName);
-    // console.log("exists password: ", exists.attributes.password);
-    // console.log("password: ", password);
     if(exists){
       bcrypt.compare(password, exists.attributes.password, function(err, check){
         if(check === true){
-          res.render('index');
+          req.session.regenerate(function(){
+            req.session.user = username;
+            res.redirect('index');
+          });
         } else {
-          console.log("Password is invalid");
+          console.log('Password is invalid');
           res.render('login');
         }
       });
