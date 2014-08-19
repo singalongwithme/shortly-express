@@ -46,14 +46,14 @@ db.knex.schema.hasTable('clicks').then(function(exists) {
 /************************************************************/
 
 
-db.knex.schema.hasTable('users').then(function(exists) {
+db.knex.schema.hasTable('userTable').then(function(exists) {
   if (!exists) {
-    db.knex.schema.createTable('users', function (users) {
-      users.increments('id').primary();
-      users.string('userName');
-      users.string('password');
-      users.integer('link_id');
-      users.timestamps();
+    db.knex.schema.createTable('userTable', function (userTable) {
+      userTable.increments('id').primary();
+      userTable.string('userName');
+      userTable.string('password');
+      userTable.integer('link_id');
+      userTable.timestamps();
     }).then(function (table) {
       console.log('Created Table', table);
     });

@@ -20,7 +20,7 @@ var xbeforeEach = function(){};
 
 describe('', function() {
 
-  xbeforeEach(function() {
+  beforeEach(function() {
     // log out currently signed in user
     request('http://127.0.0.1:4568/logout', function(error, res, body) {});
 
@@ -64,7 +64,7 @@ describe('', function() {
 
     var requestWithSession = request.defaults({jar: true});
 
-    xbeforeEach(function(done){      // create a user that we can then log-in with
+    beforeEach(function(done){      // create a user that we can then log-in with
       new User({
           'username': 'Phillip',
           'password': 'Phillip'
@@ -155,14 +155,14 @@ describe('', function() {
 
       var link;
 
-      xbeforeEach(function(done){
+      beforeEach(function(done){
+          console.log("link before save: ",link);
         // save a link to the database
         link = new Link({
           url: 'http://www.roflzoo.com/',
           title: 'Rofl Zoo - Daily funny animal pictures',
           base_url: 'http://127.0.0.1:4568'
         });
-          console.log("link before save: ",link);
 
         link.save().then(function(){
           console.log(link);

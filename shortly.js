@@ -39,14 +39,28 @@ app.post('/signup',
 function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
-  // username & pw cannot be null
-  // then check if user exists, if not then save
 
-  db.knex('users')
-    .insert({userName: username, password: password})
-    .then(function(){
-      return res.redirect(res.render('index'));
-    });
+  new User({userName: username}).fetch()
+  .then(function(exists){
+    if(exists){
+      //fetch will return true if username already exists in collection
+      console.log("This username already exists");
+    } else if (!exists) {
+
+      var user = new User({
+        userName: username,
+        password: password
+      });
+
+      user.save()
+      .then(function(newUser){
+        Users.add(newUser);
+        console.log("newUser: ",newUser);
+        return res.render('index');
+      });
+    }
+  });
+
 });
 
 app.get('/create',
