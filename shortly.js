@@ -35,6 +35,7 @@ function(req, res) {
   res.render('signup');
 });
 
+//Signup new users
 app.post('/signup',
 function(req, res) {
   var username = req.body.username;
@@ -56,12 +57,29 @@ function(req, res) {
       .then(function(newUser){
         Users.add(newUser);
         console.log("newUser: ",newUser);
-        return res.render('index');
+        return res.render('login');
       });
     }
   });
-
 });
+
+//For login
+app.post('/login',
+  function(req, res){
+  var username = req.body.username;
+  var password = req.body.password;
+
+  new User({userName: username, password: password}).fetch()
+  .then(function(exists){
+    if(exists){
+      res.render('index');
+    } else if (!exists) {
+      console.log('Username and/or password is invalid');
+    }
+  });
+});
+
+
 
 app.get('/create',
 function(req, res) {
