@@ -31,14 +31,20 @@ function restrict(req, res, next) {
     next();
   } else {
     req.session.error = 'Access denied!';
-    res.redirect('/login');
+    res.redirect('login');
   }
 };
 
 app.get('/',
+  function(req, res){
+    res.redirect('/login');
+  });
+
+app.get('/logout',
 function(req, res) {
-  restrict(req, res, function(){
-    res.render('index');
+  req.session.destroy(function(){
+    res.redirect('login');
+    // res.render('login');
   });
 });
 
@@ -58,7 +64,7 @@ function(req, res) {
   .then(function(exists){
     if(exists){
       //fetch will return true if username already exists in collection
-      console.log("This username already exists");
+      console.log('This username already exists');
     } else if (!exists) {
 
       var user = new User({
@@ -69,13 +75,19 @@ function(req, res) {
       user.save()
       .then(function(newUser){
         Users.add(newUser);
-        console.log("newUser: ",newUser);
-        return res.render('login');
+        req.session.regenerate(function(){
+          req.session.user = username;
+          return res.redirect('/index');
+        });
       });
     }
   });
 });
 
+app.get('/index', restrict,
+  function(req, res) {
+    res.render('index');
+  });
 
 //For login
 app.post('/login',
@@ -104,21 +116,24 @@ app.post('/login',
   });
 });
 
-
-
-app.get('/create',
+app.get('/create', restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links',
+app.get('/login',
+function(req, res) {
+  res.render('login');
+});
+
+app.get('/links', restrict,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links',
+app.post('/links', restrict,
 function(req, res) {
   var uri = req.body.url;
   if (!util.isValidUrl(uri)) {
