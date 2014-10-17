@@ -2,7 +2,9 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
-
+var bcrypt = require('bcrypt-nodejs');
+var session = require('express-session');
+var cookieParser = require('cookie-parser');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -12,6 +14,8 @@ var Link = require('./app/models/link');
 var Click = require('./app/models/click');
 
 var app = express();
+app.use(cookieParser('shhhhh, very secret'));
+app.use(session());
 
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
@@ -22,28 +26,116 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+function restrict(req, res, next) {
+  if (req.session.user) {
+    next();
+  } else {
+    req.session.error = 'Access denied!';
+    res.redirect('login');
+  }
+};
 
-app.get('/', 
+app.get('/',
+  function(req, res){
+    res.redirect('/login');
+  });
+
+app.get('/logout',
+function(req, res) {
+  req.session.destroy(function(){
+    res.redirect('login');
+    // res.render('login');
+  });
+});
+
+// if clicked create account, render signup html
+app.get('/signup',
+function(req, res) {
+  res.render('signup');
+});
+
+//Signup new users
+app.post('/signup',
+function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+
+  new User({userName: username}).fetch()
+  .then(function(exists){
+    if(exists){
+      //fetch will return true if username already exists in collection
+      console.log('This username already exists');
+    } else if (!exists) {
+
+      var user = new User({
+        userName: username,
+        password: password
+      });
+
+      user.save()
+      .then(function(newUser){
+        Users.add(newUser);
+        req.session.regenerate(function(){
+          req.session.user = username;
+          return res.redirect('/index');
+        });
+      });
+    }
+  });
+});
+
+app.get('/index', restrict,
+  function(req, res) {
+    res.render('index');
+  });
+
+//For login
+app.post('/login',
+  function(req, res){
+  var username = req.body.username;
+  var password = req.body.password;
+
+  new User({userName: username}).fetch()
+  .then(function(exists){
+    if(exists){
+      bcrypt.compare(password, exists.attributes.password, function(err, check){
+        if(check === true){
+          req.session.regenerate(function(){
+            req.session.user = username;
+            res.redirect('index');
+          });
+        } else {
+          console.log('Password is invalid');
+          res.render('login');
+        }
+      });
+    } else if (!exists) {
+      console.log('Username and/or password is invalid');
+      res.render('login');
+    }
+  });
+});
+
+app.get('/create', restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/create', 
+app.get('/login',
 function(req, res) {
-  res.render('index');
+  res.render('login');
 });
 
-app.get('/links', 
+app.get('/links', restrict,
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links', 
+app.post('/links', restrict,
 function(req, res) {
   var uri = req.body.url;
-
   if (!util.isValidUrl(uri)) {
     console.log('Not a valid url: ', uri);
     return res.send(404);
@@ -77,8 +169,6 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
-
-
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail

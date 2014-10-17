@@ -46,4 +46,19 @@ db.knex.schema.hasTable('clicks').then(function(exists) {
 /************************************************************/
 
 
+db.knex.schema.hasTable('userTable').then(function(exists) {
+  if (!exists) {
+    db.knex.schema.createTable('userTable', function (userTable) {
+      userTable.increments('id').primary();
+      userTable.string('userName');
+      userTable.string('password');
+      userTable.string('hash');
+      userTable.integer('link_id');
+      userTable.timestamps();
+    }).then(function (table) {
+      console.log('Created Table', table);
+    });
+  }
+});
+
 module.exports = db;
